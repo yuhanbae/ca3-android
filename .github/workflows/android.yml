@@ -114,10 +114,10 @@ jobs:
           fi
 
       - name: Run unit tests
-        run: ./gradlew test
+        run: ./gradlew test -Pandroid.aapt2FromMavenOverride=
 
       - name: Build release APK
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew assembleRelease -Pandroid.aapt2FromMavenOverride= --stacktrace
 
       - name: Verify APK
         run: |

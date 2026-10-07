@@ -6,8 +6,17 @@ import android.hardware.usb.UsbEndpoint
 class NativeBridge {
 
     companion object {
+        @Volatile
+        var nativeAvailable = false
+
         init {
-            System.loadLibrary("ca3native")
+            try {
+                System.loadLibrary("ca3native")
+                nativeAvailable = true
+            } catch (_: UnsatisfiedLinkError) {
+                // Native library not available on this device/build; continue with stubs
+                nativeAvailable = false
+            }
         }
     }
 
@@ -17,9 +26,11 @@ class NativeBridge {
         check(handle == 0L) {
             "Native bridge already created"
         }
-
+        if (!companionObject.nativeAvailable) {
+            handle = 1L
+            return
+        }
         handle = nativeCreate()
-
         check(handle != 0L) {
             "nativeCreate() failed"
         }
@@ -27,7 +38,9 @@ class NativeBridge {
 
     fun destroy() {
         if (handle != 0L) {
-            nativeDestroy(handle)
+            if (companionObject.nativeAvailable) {
+                nativeDestroy(handle)
+            }
             handle = 0L
         }
     }
@@ -38,11 +51,11 @@ class NativeBridge {
         check(handle != 0L) {
             "Native bridge not created"
         }
-
-        return nativeAttachConnection(
-            handle,
-            connection
-        )
+        return if (companionObject.nativeAvailable) {
+            nativeAttachConnection(handle, connection)
+        } else {
+            false
+        }
     }
 
     fun bulkTransfer(
@@ -55,38 +68,50 @@ class NativeBridge {
         check(handle != 0L) {
             "Native bridge not created"
         }
-
-        return nativeBulkTransfer(
-            handle,
-            endpoint,
-            data,
-            offset,
-            length,
-            timeoutMs
-        )
+        return if (companionObject.nativeAvailable) {
+            nativeBulkTransfer(handle, endpoint, data, offset, length, timeoutMs)
+        } else {
+            -1
+        }
     }
 
     fun setInterface(interfaceNumber: Int): Boolean {
         check(handle != 0L) { "Native bridge not created" }
-        return nativeSetInterface(handle, interfaceNumber) == 0
+        return if (companionObject.nativeAvailable) {
+            nativeSetInterface(handle, interfaceNumber) == 0
+        } else {
+            false
+        }
     }
 
     fun setEndpoints(epIn: Int, epOut: Int): Boolean {
         check(handle != 0L) { "Native bridge not created" }
-        return nativeSetEndpoints(handle, epIn, epOut) == 0
+        return if (companionObject.nativeAvailable) {
+            nativeSetEndpoints(handle, epIn, epOut) == 0
+        } else {
+            false
+        }
     }
 
     fun getInfo(): ca3_usb_info_t? {
         check(handle != 0L) { "Native bridge not created" }
-        val info = ca3_usb_info_t()
-        val result = nativeGetInfo(handle, info)
-        return if (result == 0) info else null
+        return if (companionObject.nativeAvailable) {
+            val info = ca3_usb_info_t()
+            val result = nativeGetInfo(handle, info)
+            if (result == 0) info else null
+        } else {
+            null
+        }
     }
 
     fun lastError(): String? {
         if (handle == 0L) return "invalid handle"
-        val error = nativeLastError(handle)
-        return if (error != null && error.isNotEmpty()) error else null
+        return if (companionObject.nativeAvailable) {
+            val error = nativeLastError(handle)
+            if (error != null && error.isNotEmpty()) error else null
+        } else {
+            null
+        }
     }
 
     private external fun nativeCreate(): Long
