@@ -46,37 +46,33 @@ jobs:
           cat gradle.properties
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 35
-          ndk-version: r28b
-          cmake-version: 3.31.6
-          build-tools-version: 35.0.0
+        run: |
+          set -euo pipefail
+          echo "=== Setting up Android SDK ==="
+          # Use the pre-installed Android SDK on GitHub runners
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH
+          
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          
+          # Accept licenses
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          
+          # Install required components
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;28.2.13676358" "cmake;3.31.6"
+          
+          echo "=== SDK setup complete ==="
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify Android SDK setup
-        run: |
-          set -euo pipefail
-          echo "=== Debug: Environment ==="
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
-          echo "PATH=$PATH"
-          echo "=== Checking for sdkmanager ==="
-          if command -v sdkmanager &> /dev/null; then
-            echo "sdkmanager found: $(which sdkmanager)"
-            sdkmanager --version
-          else
-            echo "sdkmanager NOT found in PATH"
-          fi
-          echo "=== Accepting licenses ==="
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          echo "=== SDK setup complete ==="
-
       - name: "Verify toolchain"
         run: |
           echo ">>> VERIFY TOOLCHAIN START <<<"
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH
           echo "JAVA_HOME: $JAVA_HOME"
           echo "ANDROID_HOME: $ANDROID_HOME"
           echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
@@ -85,19 +81,9 @@ jobs:
           echo "=== Gradle version ==="
           ./gradlew --version
           echo "=== ADB version ==="
-          if [ -f "$ANDROID_HOME/platform-tools/adb" ]; then
-            "$ANDROID_HOME/platform-tools/adb" version
-          else
-            echo "ADB not found at $ANDROID_HOME/platform-tools/adb"
-            find $ANDROID_HOME -name "adb" 2>/dev/null | head -5
-          fi
+          "$ANDROID_HOME/platform-tools/adb" version
           echo "=== NDK version ==="
-          if [ -n "$ANDROID_NDK_HOME" ] && [ -f "$ANDROID_NDK_HOME/ndk-build" ]; then
-            "$ANDROID_NDK_HOME/ndk-build" --version
-          else
-            echo "ndk-build not found at $ANDROID_NDK_HOME/ndk-build"
-            find $ANDROID_HOME/ndk -name "ndk-build" 2>/dev/null | head -5
-          fi
+          "$ANDROID_NDK_HOME/ndk-build" --version
 
       - name: Create debug keystore
         run: |
