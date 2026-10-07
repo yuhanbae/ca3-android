@@ -41,8 +41,16 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          # Install Android SDK components manually for better control
-          yes | sdkmanager --licenses >/dev/null || true
+          set -x
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "PATH=$PATH"
+          which sdkmanager || echo "sdkmanager not in PATH"
+          ls -la $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager 2>/dev/null || echo "cmdline-tools not found"
+          
+          # Accept licenses
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          
+          # Install components
           sdkmanager \
             "platform-tools" \
             "platforms;android-${ANDROID_API}" \
