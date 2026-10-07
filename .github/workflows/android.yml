@@ -36,7 +36,7 @@ jobs:
           echo "=== Looking for settings.gradle ==="
           find . -name "settings.gradle*" -type f 2>/dev/null
 
-      - name: Set up JDK
+      - name: "Set up JDK"
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -79,14 +79,18 @@ jobs:
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           
           echo "=== Installing components ==="
-          sdkmanager             "platform-tools"             "platforms;android-${ANDROID_API}"             "build-tools;35.0.0"             "ndk;${NDK_VERSION}"             "cmake;${CMAKE_VERSION}"
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-${ANDROID_API}" \
+            "build-tools;35.0.0" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;${CMAKE_VERSION}"
           
           echo "=== SDK installation complete ==="
 
-      - name: Verify toolchain
+      - name: "Verify toolchain"
         run: |
-          set -x
-          echo "=== Verifying toolchain ==="
+          echo "=== START Verify toolchain ==="
           echo "JAVA_HOME: $JAVA_HOME"
           echo "ANDROID_HOME: $ANDROID_HOME"
           echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
@@ -108,6 +112,7 @@ jobs:
             echo "ndk-build not found at $ANDROID_HOME/ndk/$NDK_VERSION/ndk-build"
             find $ANDROID_HOME/ndk -name "ndk-build" 2>/dev/null | head -5
           fi
+          echo "=== END Verify toolchain ==="
 
       - name: Run unit tests
         run: ./gradlew test
@@ -117,14 +122,16 @@ jobs:
 
       - name: Verify APK
         run: |
-          APK=$(find app/build/outputs/apk/release             -name "*.apk" -type f | head -n 1)
+          APK=$(find app/build/outputs/apk/release \
+            -name "*.apk" -type f | head -n 1)
 
           test -n "$APK"
           test -s "$APK"
 
           echo "APK=$APK"
 
-          ${ANDROID_HOME}/build-tools/35.0.0/apksigner verify             "$APK"
+          ${ANDROID_HOME}/build-tools/35.0.0/apksigner verify \
+            "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
