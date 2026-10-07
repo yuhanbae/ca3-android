@@ -67,8 +67,13 @@ class MainActivity : AppCompatActivity() {
         }
     
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        try {
+            super.onCreate(savedInstanceState)
+            setContentView(R.layout.activity_main)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Startup error: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
         
         usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
