@@ -26,6 +26,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug: Show repo structure
+        run: |
+          echo "=== Repository structure ==="
+          pwd
+          ls -la
+          echo "=== Looking for gradlew ==="
+          find . -name "gradlew" -type f 2>/dev/null
+          echo "=== Looking for settings.gradle ==="
+          find . -name "settings.gradle*" -type f 2>/dev/null
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
