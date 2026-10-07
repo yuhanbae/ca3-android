@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = 'com.fieldtools.ca3bridge'
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = 'com.fieldtools.ca3bridge'
