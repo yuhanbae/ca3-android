@@ -8,8 +8,4 @@
 
 namespace ca3 {
 
-Plus1Protocol::Plus1Protocol() = default;
-
-Plus1Protocol::~Plus1Protocol() = default;
-
 } // namespace ca3

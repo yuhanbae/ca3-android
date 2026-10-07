@@ -68,8 +68,8 @@ public:
     using FrameCallback = std::function<void(const Plus1Frame&)>;
     using ErrorCallback = std::function<void(Plus1Error, const std::string&)>;
 
-    Plus1Protocol() = default;
-    ~Plus1Protocol() = default;
+    Plus1Protocol() noexcept = default;
+    ~Plus1Protocol() noexcept = default;
 
     void setCa3Transport(std::shared_ptr<Ca3Transport> transport) {
         ca3Transport_ = transport;
