@@ -250,7 +250,7 @@ private:
     std::shared_ptr<Ca3Transport> ca3Transport_;
     bool connected_ = false;
     std::vector<CatECU> discoveredECUs_;
-    std::unordered_map<uint16_t, CatParameter> parameterDatabase_;
+    static std::unordered_map<uint16_t, CatParameter> parameterDatabase_;
 
     std::function<void(const CatFrame&)> frameCallback_;
     std::function<void(const std::string&)> errorCallback_;

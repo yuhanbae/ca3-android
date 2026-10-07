@@ -7,10 +7,6 @@
 
 namespace ca3 {
 
-CANBus::~CANBus() = default;
-
-CA3CANBus::~CA3CANBus() = default;
-
 bool CA3CANBus::open() {
     LOGI("CA3 CAN bus opened");
     return true;

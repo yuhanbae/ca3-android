@@ -8,9 +8,9 @@
 
 namespace ca3 {
 
-CatProtocol::CatProtocol() noexcept = default;
+CatProtocol::CatProtocol() = default;
 
-CatProtocol::~CatProtocol() noexcept = default;
+CatProtocol::~CatProtocol() = default;
 
 // Static parameter database definition
 std::unordered_map<uint16_t, CatParameter> CatProtocol::parameterDatabase_ = {
