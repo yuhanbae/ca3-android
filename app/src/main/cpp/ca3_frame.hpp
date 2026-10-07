@@ -26,11 +26,13 @@ struct FrameCandidate {
 class FrameAnalyzer {
 public:
     struct Config {
-        size_t min_frame_size = 4;
-        size_t max_frame_size = 4096;
-        uint8_t start_byte = 0;  // 0 = any
-        bool require_crc = false;
-        size_t max_buffer_size = 64 * 1024;
+        size_t min_frame_size;
+        size_t max_frame_size;
+        uint8_t start_byte;
+        bool require_crc;
+        size_t max_buffer_size;
+        
+        Config() : min_frame_size(4), max_frame_size(4096), start_byte(0), require_crc(false), max_buffer_size(64 * 1024) {}
     };
     
     explicit FrameAnalyzer(Config config = {});
