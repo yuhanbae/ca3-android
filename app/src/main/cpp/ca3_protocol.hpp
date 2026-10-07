@@ -80,6 +80,10 @@ public:
         size_t max_frames = 10000;
         bool enable_j1939 = true;
         bool enable_iso15765 = true;
+        
+        Config() = default;
+        Config(size_t maxFrames, bool enableJ1939, bool enableIso15765)
+            : max_frames(maxFrames), enable_j1939(enableJ1939), enable_iso15765(enableIso15765) {}
     };
     
     explicit ProtocolAnalyzer(Config config = {});

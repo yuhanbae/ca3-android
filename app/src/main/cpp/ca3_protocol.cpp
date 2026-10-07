@@ -6,7 +6,7 @@
 namespace ca3 {
 
 ProtocolAnalyzer::ProtocolAnalyzer(Config config) : config_(config) {
-    j1939_frames_.reserve(config_.max_frames);
+        // std::deque does not have reserve(), only std::vector does
     hypotheses_.reserve(100);
 }
 

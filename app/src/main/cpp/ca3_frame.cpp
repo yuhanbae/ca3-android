@@ -47,7 +47,7 @@ std::vector<FrameCandidate> FrameAnalyzer::findCandidates() {
     return candidates;
 }
 
-std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryLengthPrefixedFrame(size_t start) {
+std::optional<FrameCandidate> FrameAnalyzer::tryLengthPrefixedFrame(size_t start) {
     if (start + 2 > buffer_.size()) return std::nullopt;
     
     uint8_t length_byte = buffer_[start + 1];
@@ -93,7 +93,7 @@ std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryLengthPrefixedFra
     return candidate;
 }
 
-std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryDelimitedFrame(size_t start) {
+std::optional<FrameCandidate> FrameAnalyzer::tryDelimitedFrame(size_t start) {
     // Look for start/end delimiters (e.g., 0x7E, 0x55, 0xAA)
     static const uint8_t common_delimiters[] = {0x7E, 0x55, 0xAA, 0x5A, 0xA5, 0x02, 0x03};
     
@@ -124,7 +124,7 @@ std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryDelimitedFrame(si
     return std::nullopt;
 }
 
-std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryFixedLengthFrame(size_t start, uint8_t length_byte) {
+std::optional<FrameCandidate> FrameAnalyzer::tryFixedLengthFrame(size_t start, uint8_t length_byte) {
     size_t frame_len = length_byte;
     if (frame_len < config_.min_frame_size || frame_len > config_.max_frame_size) {
         return std::nullopt;
@@ -144,7 +144,7 @@ std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryFixedLengthFrame(
     return candidate;
 }
 
-std::optional<FrameAnalyzer::FrameCandidate> FrameAnalyzer::tryCrcFrame(size_t start, size_t max_len) {
+std::optional<FrameCandidate> FrameAnalyzer::tryCrcFrame(size_t start, size_t max_len) {
     // Try frames ending with CRC
     for (size_t len = config_.min_frame_size; len <= std::min(max_len, config_.max_frame_size); ++len) {
         if (len < 3) continue;
