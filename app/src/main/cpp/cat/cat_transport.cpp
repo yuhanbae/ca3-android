@@ -8,10 +8,6 @@
 
 namespace ca3 {
 
-CatProtocol::CatProtocol() = default;
-
-CatProtocol::~CatProtocol() = default;
-
 // Static parameter database definition
 std::unordered_map<uint16_t, CatParameter> CatProtocol::parameterDatabase_ = {
     // Engine parameters

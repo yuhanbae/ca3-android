@@ -102,8 +102,8 @@ public:
     using ErrorCallback = std::function<void(const std::string&)>;
     using ECUCallback = std::function<void(const CatECU&)>;
 
-    CatProtocol() = default;
-    ~CatProtocol() = default;
+    CatProtocol() noexcept = default;
+    ~CatProtocol() noexcept = default;
 
     void setCa3Transport(std::shared_ptr<Ca3Transport> transport) {
         ca3Transport_ = transport;
