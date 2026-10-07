@@ -169,3 +169,63 @@ Java_com_fieldtools_ca3bridge_NativeBridge_nativeBulkTransfer(
         timeout
     );
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_fieldtools_ca3bridge_NativeBridge_nativeSetInterface(
+    JNIEnv* env,
+    jobject /* thiz */,
+    jlong ptr,
+    jint interfaceNumber
+) {
+    auto* s = state(ptr);
+    if (!s) return -1;
+    s->interfaceNumber = interfaceNumber;
+    LOGI("nativeSetInterface %d", interfaceNumber);
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_fieldtools_ca3bridge_NativeBridge_nativeSetEndpoints(
+    JNIEnv* env,
+    jobject /* thiz */,
+    jlong ptr,
+    jint epIn,
+    jint epOut
+) {
+    auto* s = state(ptr);
+    if (!s) return -1;
+    s->epIn = epIn;
+    s->epOut = epOut;
+    LOGI("nativeSetEndpoints in=%d out=%d", epIn, epOut);
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_fieldtools_ca3bridge_NativeBridge_nativeGetInfo(
+    JNIEnv* env,
+    jobject /* thiz */,
+    jlong ptr,
+    jobject infoObj
+) {
+    auto* s = state(ptr);
+    if (!s || !infoObj) return -1;
+    LOGI("nativeGetInfo stub");
+    // Stub: leave Kotlin object with default values
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_com_fieldtools_ca3bridge_NativeBridge_nativeLastError(
+    JNIEnv* env,
+    jobject /* thiz */,
+    jlong ptr
+) {
+    auto* s = state(ptr);
+    if (!s) return nullptr;
+    LOGI("nativeLastError stub");
+    return nullptr;
+}
