@@ -16,10 +16,6 @@ jobs:
     name: Build CA3 Bridge
     runs-on: ubuntu-24.04
 
-    defaults:
-      run:
-        working-directory: ca3-android
-
     env:
       JAVA_VERSION: "21"
       ANDROID_API: "35"
@@ -112,7 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CA3-Bridge-release
-          path: ca3-android/app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
       - name: Upload native libraries
@@ -120,5 +116,5 @@ jobs:
         with:
           name: CA3-Bridge-native-arm64
           path: |
-            ca3-android/app/build/intermediates/cxx/Release/**/*.so
+            app/build/intermediates/cxx/Release/**/*.so
           if-no-files-found: warn
