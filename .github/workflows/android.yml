@@ -79,17 +79,13 @@ jobs:
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           
           echo "=== Installing components ==="
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-${ANDROID_API}" \
-            "build-tools;35.0.0" \
-            "ndk;${NDK_VERSION}" \
-            "cmake;${CMAKE_VERSION}"
+          sdkmanager             "platform-tools"             "platforms;android-${ANDROID_API}"             "build-tools;35.0.0"             "ndk;${NDK_VERSION}"             "cmake;${CMAKE_VERSION}"
           
           echo "=== SDK installation complete ==="
 
       - name: Verify toolchain
         run: |
+          set -x
           echo "=== Verifying toolchain ==="
           echo "JAVA_HOME: $JAVA_HOME"
           echo "ANDROID_HOME: $ANDROID_HOME"
@@ -121,16 +117,14 @@ jobs:
 
       - name: Verify APK
         run: |
-          APK=$(find app/build/outputs/apk/release \
-            -name "*.apk" -type f | head -n 1)
+          APK=$(find app/build/outputs/apk/release             -name "*.apk" -type f | head -n 1)
 
           test -n "$APK"
           test -s "$APK"
 
           echo "APK=$APK"
 
-          ${ANDROID_HOME}/build-tools/35.0.0/apksigner verify \
-            "$APK"
+          ${ANDROID_HOME}/build-tools/35.0.0/apksigner verify             "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
