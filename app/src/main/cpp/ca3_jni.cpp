@@ -26,7 +26,7 @@ static NativeHandle* getHandle(jlong handle) {
 extern "C" {
 
 JNIEXPORT jlong JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeCreate(JNIEnv* env, jobject thiz) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeCreate(JNIEnv* env, jobject thiz) {
     auto handle = new NativeHandle();
     handle->frame_analyzer = std::make_unique<ca3::FrameAnalyzer>();
     handle->protocol_analyzer = std::make_unique<ca3::ProtocolAnalyzer>();
@@ -35,7 +35,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeCreate(JNIEnv* env, jobject thiz) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeDestroy(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeDestroy(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (h) {
         delete h;
@@ -44,7 +44,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeDestroy(JNIEnv* env, jobject thiz, jlong h
 }
 
 JNIEXPORT void JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeFeed(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeFeed(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->frame_analyzer || !data) return;
     
@@ -59,7 +59,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeFeed(JNIEnv* env, jobject thiz, jlong hand
 }
 
 JNIEXPORT void JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeFeedWithDirection(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data, jboolean host_to_device, jlong timestamp) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeFeedWithDirection(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data, jboolean host_to_device, jlong timestamp) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->frame_analyzer || !data) return;
     
@@ -74,16 +74,16 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeFeedWithDirection(JNIEnv* env, jobject thi
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeFindCandidates(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeFindCandidates(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->frame_analyzer) return nullptr;
     
     auto candidates = h->frame_analyzer->findCandidates();
     
-    jclass candidateClass = env->FindClass("com/yuhanbae/ca3/FrameCandidate");
+    jclass candidateClass = env->FindClass("com/fieldtools/ca3bridge/FrameCandidate");
     if (!candidateClass) return nullptr;
     
-    jmethodID constructor = env->GetMethodID(candidateClass, "<init>", "(IIIIIZLjava/lang/String;DLjava/lang/String;)V");
+    jmethodID constructor = env->GetMethodID(candidateClass, "<init>", "(IIIIZLjava/lang/String;DLjava/lang/String;)V");
     if (!constructor) return nullptr;
     
     jobjectArray result = env->NewObjectArray(candidates.size(), candidateClass, nullptr);
@@ -92,7 +92,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeFindCandidates(JNIEnv* env, jobject thiz, 
         const auto& c = candidates[i];
         jobject obj = env->NewObject(candidateClass, constructor,
             c.offset, c.length, c.possible_start_byte, c.possible_length_byte,
-            c.has_valid_crc,
+            static_cast<jboolean>(c.has_valid_crc),
             env->NewStringUTF(c.crc_type.c_str()),
             c.confidence,
             env->NewStringUTF(c.hypothesis.c_str())
@@ -104,7 +104,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeFindCandidates(JNIEnv* env, jobject thiz, 
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeAnalyzeFrame(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeAnalyzeFrame(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->frame_analyzer || !data) return nullptr;
     
@@ -116,7 +116,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeAnalyzeFrame(JNIEnv* env, jobject thiz, jl
     
     auto analysis = h->frame_analyzer->analyzeFrame(reinterpret_cast<const uint8_t*>(buffer.data()), len);
     
-    jclass analysisClass = env->FindClass("com/yuhanbae/ca3/FrameAnalysis");
+    jclass analysisClass = env->FindClass("com/fieldtools/ca3bridge/FrameAnalysis");
     if (!analysisClass) return nullptr;
     
     jmethodID constructor = env->GetMethodID(analysisClass, "<init>", "([B[Ljava/lang/String;IILjava/lang/String;)V");
@@ -145,13 +145,13 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeAnalyzeFrame(JNIEnv* env, jobject thiz, jl
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeGetJ1939Frames(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeGetJ1939Frames(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->protocol_analyzer) return nullptr;
     
     const auto& frames = h->protocol_analyzer->getJ1939Frames();
     
-    jclass frameClass = env->FindClass("com/yuhanbae/ca3/J1939Frame");
+    jclass frameClass = env->FindClass("com/fieldtools/ca3bridge/J1939Frame");
     if (!frameClass) return nullptr;
     
     jmethodID constructor = env->GetMethodID(frameClass, "<init>", "(I[BBIJ)V");
@@ -178,13 +178,13 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeGetJ1939Frames(JNIEnv* env, jobject thiz, 
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeGetHypotheses(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeGetHypotheses(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->protocol_analyzer) return nullptr;
     
     const auto& hypotheses = h->protocol_analyzer->getHypotheses();
     
-    jclass hypClass = env->FindClass("com/yuhanbae/ca3/ProtocolHypothesis");
+    jclass hypClass = env->FindClass("com/fieldtools/ca3bridge/ProtocolHypothesis");
     if (!hypClass) return nullptr;
     
     jmethodID constructor = env->GetMethodID(hypClass, "<init>", "(ILjava/lang/String;DLjava/lang/String;Ljava/lang/String;)V");
@@ -214,7 +214,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeGetHypotheses(JNIEnv* env, jobject thiz, j
 }
 
 JNIEXPORT void JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeClear(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeClear(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (!h) return;
     
@@ -223,13 +223,13 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeClear(JNIEnv* env, jobject thiz, jlong han
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeGetStats(JNIEnv* env, jobject thiz, jlong handle) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeGetStats(JNIEnv* env, jobject thiz, jlong handle) {
     NativeHandle* h = getHandle(handle);
     if (!h || !h->protocol_analyzer) return nullptr;
     
     auto stats = h->protocol_analyzer->getStats();
     
-    jclass statsClass = env->FindClass("com/yuhanbae/ca3/ProtocolStats");
+    jclass statsClass = env->FindClass("com/fieldtools/ca3bridge/ProtocolStats");
     if (!statsClass) return nullptr;
     
     jmethodID constructor = env->GetMethodID(statsClass, "<init>", "(JJJJ)V");
@@ -245,7 +245,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeGetStats(JNIEnv* env, jobject thiz, jlong 
 
 // CRC testing
 JNIEXPORT jobjectArray JNICALL
-Java_com_yuhanbae_ca3_NativeCa3_nativeTestCrc(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data, jlong expected_crc) {
+Java_com_fieldtools_ca3bridge_NativeCa3_nativeTestCrc(JNIEnv* env, jobject thiz, jlong handle, jbyteArray data, jlong expected_crc) {
     NativeHandle* h = getHandle(handle);
     if (!h || !data) return nullptr;
     
@@ -257,7 +257,7 @@ Java_com_yuhanbae_ca3_NativeCa3_nativeTestCrc(JNIEnv* env, jobject thiz, jlong h
     
     auto results = ca3::CrcCalculator::testAll(reinterpret_cast<const uint8_t*>(buffer.data()), len, expected_crc);
     
-    jclass resultClass = env->FindClass("com/yuhanbae/ca3/CrcResult");
+    jclass resultClass = env->FindClass("com/fieldtools/ca3bridge/CrcResult");
     if (!resultClass) return nullptr;
     
     jmethodID constructor = env->GetMethodID(resultClass, "<init>", "(Ljava/lang/String;JZ)V");

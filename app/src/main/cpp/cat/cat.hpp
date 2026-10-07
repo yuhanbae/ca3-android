@@ -345,20 +345,4 @@ std::unordered_map<uint16_t, CatParameter> CatProtocol::parameterDatabase_ = {
     {0xF001, {0xF001, "EBC1 - Brake", "Electronic brake", "", 1.0, 0.0, 2}},
 };
 
-const std::unordered_map<uint16_t, CatParameter>& CatProtocol::getStaticParameterDatabase() {
-    return parameterDatabase_;
-}
-
-void CatProtocol::populateKnownECUs() {
-    // Implementation in header
-}
-
-void CatProtocol::parseCatData(const uint8_t* data, size_t len, uint64_t timestampNs) {
-    // Implementation in header
-}
-
-const std::unordered_map<uint16_t, CatParameter>& CatProtocol::getStaticParameterDatabase() {
-    return parameterDatabase_;
-}
-
 } // namespace ca3

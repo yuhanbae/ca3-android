@@ -19,8 +19,6 @@ jobs:
     env:
       JAVA_VERSION: "21"
       ANDROID_API: "35"
-      NDK_VERSION: "28.2.13676358"
-      CMAKE_VERSION: "3.31.6"
 
     steps:
       - name: Checkout
@@ -42,14 +40,28 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Verify gradle.properties
+        run: |
+          echo "=== gradle.properties ==="
+          cat gradle.properties
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 35
+          ndk-version: r28b
+          cmake-version: 3.31.6
+          build-tools-version: 35.0.0
+
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Install Android SDK
+      - name: Verify Android SDK setup
         run: |
           set -euo pipefail
           echo "=== Debug: Environment ==="
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
           echo "PATH=$PATH"
           echo "=== Checking for sdkmanager ==="
           if command -v sdkmanager &> /dev/null; then
@@ -57,36 +69,10 @@ jobs:
             sdkmanager --version
           else
             echo "sdkmanager NOT found in PATH"
-            echo "Checking ANDROID_HOME/cmdline-tools..."
-            ls -la $ANDROID_HOME/cmdline-tools/ 2>/dev/null || echo "cmdline-tools not found"
-            ls -la $ANDROID_HOME/cmdline-tools/latest/bin/ 2>/dev/null || echo "latest/bin not found"
           fi
-          
-          echo "=== Installing Android SDK command line tools if needed ==="
-          if ! command -v sdkmanager &> /dev/null; then
-            echo "Installing Android SDK command line tools..."
-            SDK_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-            echo "Downloading from $SDK_TOOLS_URL"
-            wget -q "$SDK_TOOLS_URL" -O /tmp/cmdline-tools.zip
-            echo "Download complete, unzipping..."
-            unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
-            mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-            export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-            echo "sdkmanager now at: $(which sdkmanager)"
-          fi
-          
           echo "=== Accepting licenses ==="
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          
-          echo "=== Installing components ==="
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-${ANDROID_API}" \
-            "build-tools;35.0.0" \
-            "ndk;${NDK_VERSION}" \
-            "cmake;${CMAKE_VERSION}"
-          
-          echo "=== SDK installation complete ==="
+          echo "=== SDK setup complete ==="
 
       - name: "Verify toolchain"
         run: |
@@ -106,18 +92,33 @@ jobs:
             find $ANDROID_HOME -name "adb" 2>/dev/null | head -5
           fi
           echo "=== NDK version ==="
-          if [ -f "$ANDROID_HOME/ndk/$NDK_VERSION/ndk-build" ]; then
-            "$ANDROID_HOME/ndk/$NDK_VERSION/ndk-build" --version
+          if [ -n "$ANDROID_NDK_HOME" ] && [ -f "$ANDROID_NDK_HOME/ndk-build" ]; then
+            "$ANDROID_NDK_HOME/ndk-build" --version
           else
-            echo "ndk-build not found at $ANDROID_HOME/ndk/$NDK_VERSION/ndk-build"
+            echo "ndk-build not found at $ANDROID_NDK_HOME/ndk-build"
             find $ANDROID_HOME/ndk -name "ndk-build" 2>/dev/null | head -5
           fi
 
+      - name: Create debug keystore
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair \
+              -alias androiddebugkey \
+              -keypass android \
+              -keystore debug.keystore \
+              -storepass android \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000
+            echo "Debug keystore created"
+          fi
+
       - name: Run unit tests
-        run: ./gradlew test -Pandroid.aapt2FromMavenOverride=
+        run: ./gradlew test
 
       - name: Build release APK
-        run: ./gradlew assembleRelease -Pandroid.aapt2FromMavenOverride= --stacktrace
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Verify APK
         run: |
@@ -129,8 +130,14 @@ jobs:
 
           echo "APK=$APK"
 
-          ${ANDROID_HOME}/build-tools/35.0.0/apksigner verify \
-            "$APK"
+          # Find apksigner
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name "apksigner" -type f | head -n 1)
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" verify "$APK"
+          else
+            echo "apksigner not found"
+            exit 1
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -144,5 +151,5 @@ jobs:
         with:
           name: CA3-Bridge-native-arm64
           path: |
-            app/build/intermediates/cxx/Release/**/*.so
+            app/build/intermediates/cxx/**/*.so
           if-no-files-found: warn

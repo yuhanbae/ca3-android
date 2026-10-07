@@ -311,15 +311,4 @@ std::vector<uint8_t> J1939Processor::tryDecodeIsoTp(const uint8_t* data, size_t 
     return {};
 }
 
-J1939Processor::J1939Processor() {}
-J1939Processor::~J1939Processor() {}
-
-void J1939Processor::setFrameCallback(FrameCallback callback) {
-    frameCallback_ = std::move(callback);
-}
-
-void J1939Processor::setPGNCallback(PGNCallback callback) {
-    pgnCallback_ = std::move(callback);
-}
-
 } // namespace ca3

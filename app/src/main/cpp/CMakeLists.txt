@@ -9,15 +9,38 @@ add_library(
     ca3native
     SHARED
 
-    app/src/main/cpp/ca3_usb.cpp
-    app/src/main/cpp/jni/native_bridge.cpp
+    ca3_usb.cpp
+    ca3_crc.cpp
+    ca3_frame.cpp
+    ca3_jni.cpp
+    ca3_protocol.cpp
+    ca3/ca3_transport.cpp
+    can/can_bus.cpp
+    cat/cat_transport.cpp
+    diagnostics/ecu.cpp
+    diagnostics/fault_codes.cpp
+    j1939/j1939.cpp
+    j1939/pgn.cpp
+    j1939/transport.cpp
+    plus1/plus1_transport.cpp
+    capture/capture.cpp
+    usb/usb_transport.cpp
+    jni/native_bridge.cpp
 )
 
 target_include_directories(
     ca3native
     PRIVATE
 
-    app/src/main/cpp/include
+    include
+    ca3
+    can
+    cat
+    diagnostics
+    j1939
+    plus1
+    capture
+    usb
 )
 
 find_library(

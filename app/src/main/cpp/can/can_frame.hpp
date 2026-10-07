@@ -56,12 +56,17 @@ public:
     CA3CANBus() = default;
     ~CA3CANBus() override { close(); }
 
-    bool open() override { return true; }
-    void close() override {}
-    bool send(const CANFrame& frame) override { return false; }
-    void setFrameCallback(FrameCallback callback) override {}
-    void setErrorCallback(ErrorCallback callback) override {}
-    bool isOpen() const override { return false; }
+    bool open() override;
+    void close() override;
+    bool send(const CANFrame& frame) override;
+    void setFrameCallback(FrameCallback callback) override;
+    void setErrorCallback(ErrorCallback callback) override;
+    bool isOpen() const override;
+
+private:
+    FrameCallback frameCallback_;
+    ErrorCallback errorCallback_;
+    bool isOpen_ = false;
 };
 
 struct CANBitTiming {

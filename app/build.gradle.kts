@@ -33,13 +33,24 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("release.keystore")
-            storePassword = "ca3bridge123"
-            keyAlias = "ca3bridge"
-            keyPassword = "ca3bridge123"
-            enableV1Signing = true
-            enableV2Signing = true
-            enableV3Signing = true
+            val keystoreFile = file("release.keystore")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = "ca3bridge123"
+                keyAlias = "ca3bridge"
+                keyPassword = "ca3bridge123"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            } else {
+                storeFile = file("../debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
         }
     }
 
