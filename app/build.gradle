@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = 'com.yuhanbae.ca3'
+    namespace = 'com.fieldtools.ca3bridge'
     compileSdk = 36
 
     defaultConfig {
-        applicationId = 'com.yuhanbae.ca3'
+        applicationId = 'com.fieldtools.ca3bridge'
         minSdk = 26
         targetSdk = 34
         versionCode = 1

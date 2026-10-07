@@ -1,0 +1,30 @@
+# Build artifacts
+/build/
+/app/build/
+/app/.gradle/
+/.gradle/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local properties
+local.properties
+
+# Keystores
+*.keystore
+*.jks
+
+# Native build
+/app/.cxx/
+/app/.externalNativeBuild/
+
+# Temp files
+*.log
+*.tmp
