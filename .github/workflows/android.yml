@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug: Show repo structure
+      - name: "Debug: Show repo structure"
         run: |
           echo "=== Repository structure ==="
           pwd
