@@ -41,34 +41,46 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          set -x
-          echo "=== Android SDK Installation ==="
+          set -euo pipefail
+          echo "=== Debug: Environment ==="
           echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "PATH=$PATH"
+          echo "=== Checking for sdkmanager ==="
+          if command -v sdkmanager &> /dev/null; then
+            echo "sdkmanager found: $(which sdkmanager)"
+            sdkmanager --version
+          else
+            echo "sdkmanager NOT found in PATH"
+            echo "Checking ANDROID_HOME/cmdline-tools..."
+            ls -la $ANDROID_HOME/cmdline-tools/ 2>/dev/null || echo "cmdline-tools not found"
+            ls -la $ANDROID_HOME/cmdline-tools/latest/bin/ 2>/dev/null || echo "latest/bin not found"
+          fi
           
-          # Install Android SDK command line tools if not present
+          echo "=== Installing Android SDK command line tools if needed ==="
           if ! command -v sdkmanager &> /dev/null; then
             echo "Installing Android SDK command line tools..."
             SDK_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+            echo "Downloading from $SDK_TOOLS_URL"
             wget -q "$SDK_TOOLS_URL" -O /tmp/cmdline-tools.zip
+            echo "Download complete, unzipping..."
             unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
             mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
             export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+            echo "sdkmanager now at: $(which sdkmanager)"
           fi
           
-          echo "sdkmanager version: $(sdkmanager --version)"
-          
-          # Accept licenses
-          echo "Accepting licenses..."
+          echo "=== Accepting licenses ==="
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           
-          # Install components
-          echo "Installing Android SDK components..."
+          echo "=== Installing components ==="
           sdkmanager \
             "platform-tools" \
             "platforms;android-${ANDROID_API}" \
             "build-tools;35.0.0" \
             "ndk;${NDK_VERSION}" \
             "cmake;${CMAKE_VERSION}"
+          
+          echo "=== SDK installation complete ==="
 
       - name: Verify toolchain
         run: |
