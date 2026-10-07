@@ -71,6 +71,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         
         usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+
+        // Check for USB host support - crash protection
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST)) {
+            runOnUiThread {
+                updateStatus("NO USB HOST SUPPORT", error = true)
+                toast("This device does not support USB Host mode")
+            }
+            finish()
+            return
+        }
         permissionIntent = PendingIntent.getBroadcast(
             this, 0, Intent("com.fieldtools.ca3bridge.USB_PERMISSION"),
             PendingIntent.FLAG_IMMUTABLE
