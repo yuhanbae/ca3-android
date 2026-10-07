@@ -4,7 +4,7 @@ Standalone Android USB-host application for Caterpillar Communication Adapter 3 
 
 ## Overview
 
-This is a **production-ready standalone Android application** that communicates with CA3 and compatible USB diagnostic adapters using Android's native USB Host APIs. No Termux, no Python, no external daemons, no root required.
+This is a **standalone Android application** that communicates with CA3 and compatible USB diagnostic adapters using Android's native USB Host APIs. No Termux, no Python, no external daemons, no root required.
 
 ## Features
 
@@ -62,30 +62,40 @@ This is a **production-ready standalone Android application** that communicates 
 
 ### Prerequisites
 
-- Android SDK (API 36)
+- Android SDK (API 35)
 - Android NDK (r28+)
 - Gradle 9.8+
 - Kotlin 2.0.0
+- CMake 3.31.6
 
-### Build on Termux (aarch64)
-
-```bash
-cd ca3-android
-./gradlew assembleRelease
-```
-
-### Build on Linux/macOS
+### Build on Linux/macOS (canonical)
 
 ```bash
 cd ca3-android
 ./gradlew assembleRelease
 ```
+
+### Build on CI/CD (canonical)
+
+**GitHub Actions** is the canonical build environment:
+
+```yaml
+# .github/workflows/android.yml
+# ubuntu-24.04, JDK 21, Android SDK 35, NDK r28, CMake 3.31.6
+```
+
+### Build on Termux (NOT supported)
+
+Termux is **NOT a supported build environment** due to fundamental libc incompatibility:
+- Termux uses bionic libc
+- Gradle native platform and aapt2 require glibc (libstdc++.so.6)
+- Native library compilation and aapt2 R class generation will fail
 
 ### Output
 
 ```
 app/build/outputs/apk/release/app-release.apk
-lib/arm64-v8a/libca3bridge.so
+lib/arm64-v8a/libca3native.so
 ```
 
 ## Installation
@@ -105,27 +115,33 @@ Or transfer the APK to the device and install via file manager.
 5. **Select your CA3 adapter** from the list
 6. **Tap "Request Permission"** → Allow on system dialog
 7. **Tap "Connect"** to claim USB interface
-8. **Use diagnostic functions** from the UI
+8. **Run USB Smoke Test** with explicit probe bytes (no guessing)
+9. **Capture raw USB traffic** for protocol analysis
 
 ## Project Structure
 
 ```
 ca3-android/
+├── .github/workflows/android.yml    # GitHub Actions CI/CD
 ├── app/
 │   ├── src/main/
 │   │   ├── AndroidManifest.xml
 │   │   ├── java/com/fieldtools/ca3bridge/
 │   │   │   ├── MainActivity.kt           # Main UI
 │   │   │   ├── Ca3Device.kt              # USB connection logic
+│   │   │   ├── Ca3UsbSmokeTest.kt        # USB RX/TX smoke test
 │   │   │   ├── ProtocolLogger.kt         # Capture engine + SQLite
 │   │   │   ├── UsbService.kt             # Background USB monitor
 │   │   │   ├── UsbDeviceInfo.kt          # USB descriptor parser
 │   │   │   ├── NativeBridge.kt           # JNI wrapper
+│   │   │   ├── UsbDeviceInfo.kt          # USB descriptor parser
+│   │   │   ├── DeviceAdapter.kt          # USB device RecyclerView adapter
 │   │   │   └── Ca3Application.kt         # Application class
 │   │   ├── cpp/
 │   │   │   ├── CMakeLists.txt
-│   │   │   ├── native_bridge.cpp         # JNI entry point
-│   │   │   ├── usb/                      # USB transport layer
+│   │   │   ├── include/ca3_native.h      # C ABI header
+│   │   │   ├── ca3_usb.cpp               # Native USB transport
+│   │   │   ├── jni/native_bridge.cpp     # JNI entry point
 │   │   │   ├── ca3/                      # CA3 transport protocol
 │   │   │   ├── can/                      # CAN/J1939 frames
 │   │   │   ├── j1939/                    # J1939 protocol
@@ -152,26 +168,73 @@ ca3-android/
 
 ## Native Library
 
-`libca3bridge.so` provides:
+`libca3native.so` (ARM64) provides:
 
-- CRC16 (Modbus) / CRC32 (J1939) calculation
-- Protocol version detection
-- Supported protocol enumeration
-- USB transport helpers
-- Frame parsing utilities
+- **C ABI** (not C++ classes directly to Kotlin):
+  - `ca3_usb_create/destroy`
+  - `ca3_usb_set_connection/interface/endpoints`
+  - `ca3_usb_write/read/get_info/last_error`
+- **Thread-safe** opaque handle pattern
+- **JNI bridge** (`native_bridge.cpp`) delegates USB I/O to Android's `UsbDeviceConnection.bulkTransfer()`
 
 ## Protocol Support
 
 | Protocol | Status | Notes |
 |----------|--------|-------|
-| CA3 Transport | ✅ Implemented | USB bulk/interrupt/control |
-| CAT (Caterpillar) | ✅ Implemented | Security access, DTCs, live data, programming |
-| J1939 | ✅ Implemented | PGN/SPN database, Transport Protocol (BAM/RTS/CTS) |
-| CAN | ✅ Implemented | Frame parsing, bit timing |
-| PLUS+1 (Danfoss) | ✅ Implemented | SDO read/write, identity |
+| CA3 Transport (USB) | ✅ USB transport implemented; hardware validation pending | USB bulk/interrupt/control |
+| CAT (Caterpillar) | 🟡 Software module; hardware validation pending | Security access, DTCs, live data, programming |
+| J1939 | 🟡 Software module; hardware validation pending | PGN/SPN database, Transport Protocol (BAM/RTS/CTS) |
+| CAN | 🟡 Software module; hardware validation pending | Frame parsing, bit timing |
+| PLUS+1 (Danfoss) | 🟡 Software module; hardware validation pending | SDO read/write, identity |
 | ISO-TP | 🔄 Planned | ISO 15765-2 transport |
 | KWP2000 | 🔄 Planned | Keyword Protocol 2000 |
 | UDS | 🔄 Planned | Unified Diagnostic Services |
+
+**Legend**: ✅ = Hardware-validated, 🟡 = Software module implemented (awaiting hardware), 🔄 = Planned
+
+## USB RX/TX Smoke Test
+
+The app includes a **Ca3UsbSmokeTest** diagnostic that performs:
+
+1. **USB enumeration** → VID/PID/manufacturer/product
+2. **Permission grant** → Android USB permission dialog
+3. **Interface claim** → `claimInterface()`
+4. **Endpoint discovery** → IN/OUT bulk endpoints
+5. **JNI attach** → Native bridge attaches `UsbDeviceConnection`
+6. **TX** → Configurable probe bytes (explicit, no guessing)
+7. **RX** → Read from IN endpoint, logs hex
+8. **Raw capture** → Binary/JSONL/CSV export
+
+**Critical**: The probe bytes are **explicitly supplied by the user**, not guessed. Generic patterns like `00 00 00 00` or `55 AA` do not prove CA3 communication.
+
+## Hardware Validation Checklist
+
+Before claiming protocol support, each layer must be validated on real hardware:
+
+### Layer 1: USB Transport (TEST-01 through TEST-04)
+- [ ] TEST-01: USB device visible & Android permission granted
+- [ ] TEST-02: `UsbDeviceConnection` opened, correct interface claimed
+- [ ] TEST-03: Endpoints discovered (IN/OUT bulk)
+- [ ] TEST-02: `libca3native.so` loads, `nativeCreate()` succeeds
+- [ ] TEST-02: `nativeAttachConnection()` succeeds
+- [ ] TEST-03: `bulkTransfer(OUT)` returns N > 0
+- [ ] TEST-04: `bulkTransfer(IN)` returns N ≥ 0
+
+### Layer 2: CA3 Framing (TEST-05)
+- [ ] CA3-specific request sent
+- [ ] CA3-specific response received
+- [ ] Response parser validates frame structure
+
+### Layer 3: CAN/J1939 (TEST-06)
+- [ ] CAN frames extracted from CA3 frames
+- [ ] J1939 PGN/SPN decoding verified
+
+### Layer 4: CAT/PLUS+1 (TEST-07+)
+- [ ] CAT security access handshake
+- [ ] CAT DTC read / live data stream
+- [ ] PLUS+1 SDO read/write verified
+
+**Only after all layers validated** should protocol support be marked as "Implemented".
 
 ## Security Model
 
@@ -200,16 +263,29 @@ All data stored in app-private directory:
 # Unit tests
 ./gradlew test
 
-# Connected device tests
+# Connected device tests (requires hardware)
 ./gradlew connectedAndroidTest
 ```
 
 ## Known Limitations
 
-- **Native library stubbed** - Full USB transport in C++ requires Termux cmake or host build
+- **Hardware validation pending** - All protocol claims are software-only until validated on real CA3
 - **CA3 protocol reverse-engineered** - Not official specification
 - **Programming/flashing disabled** - Safety protection enabled
 - **AI assistant not integrated** - Optional future feature
+
+## CI/CD
+
+**Canonical build**: GitHub Actions (`.github/workflows/android.yml`)
+- Runner: `ubuntu-24.04`
+- JDK: Temurin 21
+- Android SDK: 35, Build Tools 35.0.0
+- NDK: r28 (28.2.13676358)
+- CMake: 3.31.6
+
+### Artifacts
+- `app-release.apk` (signed, release)
+- `libca3native.so` (arm64-v8a)
 
 ## License
 
