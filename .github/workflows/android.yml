@@ -112,6 +112,7 @@ jobs:
             echo "ndk-build not found at $ANDROID_HOME/ndk/$NDK_VERSION/ndk-build"
             find $ANDROID_HOME/ndk -name "ndk-build" 2>/dev/null | head -5
           fi
+          echo "=== END Verify toolchain ==="
 
       - name: Run unit tests
         run: ./gradlew test
