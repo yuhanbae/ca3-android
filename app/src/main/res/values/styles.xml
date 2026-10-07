@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.CA3Bridge" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/ca3_amber</item>
+        <item name="colorOnPrimary">@color/ink_100</item>
+        <item name="colorSurface">@color/slate_900</item>
+        <item name="colorSurfaceVariant">@color/slate_800</item>
+        <item name="colorOnSurface">@color/ink_100</item>
+        <item name="android:statusBarColor">@color/slate_950</item>
+        <item name="android:windowBackground">@color/slate_950</item>
+    </style>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- USB device filter - matches all USB devices for manual selection -->
+    <!-- CA3 devices will be matched by vendor/product ID at runtime -->
+    <usb-device />
+</resources>

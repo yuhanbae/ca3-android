@@ -1,0 +1,17 @@
+<resources>
+    <color name="ca3_amber">#FFC32400</color>
+    <color name="ca3_amber_light">#FFE9A13B</color>
+    <color name="slate_950">#FF020617</color>
+    <color name="slate_900">#FF0F1720</color>
+    <color name="slate_800">#FF16222E</color>
+    <color name="slate_700">#FF223141</color>
+    <color name="slate_500">#FF5B7186</color>
+    <color name="ink_100">#FFE9EEF3</color>
+    <color name="ink_200">#FFCBD5E1</color>
+    <color name="ok_green">#FF3FB95F</color>
+    <color name="warn_amber">#FFF59E0B</color>
+    <color name="error_red">#FFEF4444</color>
+    <color name="mono_bg">#FF0A0F1A</color>
+    <color name="mono_text">#FF86EFAC</color>
+    <color name="mono_dim">#FF4A6B3E</color>
+</resources>
