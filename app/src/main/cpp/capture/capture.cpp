@@ -255,18 +255,18 @@ void CaptureManager::recordUsb(const uint8_t* data, size_t length, uint64_t time
                                uint16_t value, uint16_t index) {
     if (!isCapturing_.load() || !writer_) return;
 
-    CaptureRecord record;
-    record.timestampNs = timestampNs;
-    record.direction = direction;
-    record.transferType = type;
-    record.endpoint = endpoint;
-    record.requestType = requestType;
-    record.request = request;
-    record.value = value;
-    record.index = index;
-    record.payload.assign(data, data + length);
+    CaptureRecord rec;
+    rec.timestampNs = timestampNs;
+    rec.direction = direction;
+    rec.transferType = type;
+    rec.endpoint = endpoint;
+    rec.requestType = requestType;
+    rec.request = request;
+    rec.value = value;
+    rec.index = index;
+    rec.payload.assign(data, data + length);
 
-    record(record);
+    record(rec);
 }
 
 std::string CaptureManager::getCurrentCapturePath() const {
