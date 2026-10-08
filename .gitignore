@@ -27,4 +27,7 @@ local.properties
 
 # Temp files
 *.log
-*.tmp
+*.tmpapk_download/
+crash_fix_apk/
+final_apk_download/
+native_download/
