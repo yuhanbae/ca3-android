@@ -64,8 +64,10 @@ jobs:
           
           echo "=== SDK setup complete ==="
 
-      - name: Gradle cache
+      - name: Gradle cache (dependencies only, no build cache)
         uses: gradle/actions/setup-gradle@v4
+        with:\n          cache-dependent-libs: 'all'
+          cache-read-only: false
 
       - name: "Verify toolchain"
         run: |
@@ -104,7 +106,7 @@ jobs:
         run: ./gradlew test
 
       - name: Build release APK
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew assembleRelease --stacktrace --no-build-cache
 
       - name: Verify APK
         run: |
@@ -124,6 +126,29 @@ jobs:
             echo "apksigner not found"
             exit 1
           fi
+
+          # CRITICAL: verify the app classes are actually in the dex (guards against a
+          # poisoned/stale build cache producing a hollow APK that crashes on launch).
+          D8=$(find "$ANDROID_HOME/build-tools" -name "d8" -type f | head -n 1)
+          # Unpack the dex from the APK
+          unzip -o "$APK" "classes*.dex" -d apk_dexcheck >/dev/null 2>&1 || true
+          # Concatenate and scan every dex for the essential app classes
+          FOUND_MAIN=0
+          for dexfile in apk_dexcheck/*.dex; do
+            [ -f "$dexfile" ] || continue
+            # dex string check via strings-like scan for class names
+            if strings "$dexfile" 2>/dev/null | grep -q "MainActivity"; then
+              FOUND_MAIN=1
+            fi
+          done
+          if [ "$FOUND_MAIN" -eq 1 ]; then
+            echo "OK: MainActivity class found in APK dex"
+          else
+            echo "ERROR: MainActivity class MISSING from APK dex — hollow/stale build detected!"
+            ls -la apk_dexcheck/ 2>/dev/null
+            exit 1
+          fi
+          rm -rf apk_dexcheck
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
