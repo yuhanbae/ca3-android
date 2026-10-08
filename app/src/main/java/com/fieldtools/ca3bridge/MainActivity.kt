@@ -145,8 +145,8 @@ class MainActivity : AppCompatActivity() {
                 usbManager.deviceList.values.toList()
             }
             runOnUiThread {
-                deviceList = it
-                updateDeviceList(it)
+                deviceList = devices
+                updateDeviceList(devices)
             }
         }
     }
@@ -188,12 +188,12 @@ class MainActivity : AppCompatActivity() {
         ca3Device = Ca3Device(
             usbManager = usbManager,
             device = device,
-            onStateChange = { state -> runOnUiThread { onCa3StateChange(it) } },
-            onError = { error, msg -> runOnUiThread { onCa3Error(it, msg) } },
+            onStateChange = { state -> runOnUiThread { onCa3StateChange(state) } },
+            onError = { error, msg -> runOnUiThread { onCa3Error(error, msg) } },
             onLog = { module, level, msg -> runOnUiThread { appendLog(module, level, msg) } },
             onTraffic = { record -> 
-                protocolLogger?.record(it)
-                runOnUiThread { appendTraffic(it) }
+                protocolLogger?.record(record)
+                runOnUiThread { appendTraffic(record) }
             }
         )
         
@@ -264,11 +264,13 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun exportDescriptor() {
-        ca3Device?.let { device ->
-            lifecycleScope.launch {
-                val file = withContext(Dispatchers.IO) { protocolLogger?.exportDescriptor(it) }
-                it?.let { runOnUiThread { toast("Descriptor exported: ${it.name}") } }
-                    ?: runOnUiThread { toast("Export failed") }
+        val device = ca3Device ?: return
+        lifecycleScope.launch {
+            val file = withContext(Dispatchers.IO) { protocolLogger?.exportDescriptor(device) }
+            if (file != null) {
+                runOnUiThread { toast("Descriptor exported: ${file.name}") }
+            } else {
+                runOnUiThread { toast("Export failed") }
             }
         }
     }
