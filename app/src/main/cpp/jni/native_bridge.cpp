@@ -212,8 +212,33 @@ Java_com_fieldtools_ca3bridge_NativeBridge_nativeGetInfo(
 ) {
     auto* s = state(ptr);
     if (!s || !infoObj) return -1;
-    LOGI("nativeGetInfo stub");
-    // Stub: leave Kotlin object with default values
+    LOGI("nativeGetInfo");
+    // Populate ca3_usb_info_t Kotlin data class fields from internal state
+    jclass infoClass = env->GetObjectClass(infoObj);
+    if (!infoClass) {
+        LOGE("GetObjectClass for infoObj failed");
+        return -1;
+    }
+    auto setIntField = [&](const char* name) -> jfieldID {
+        jfieldID fid = env->GetFieldID(infoClass, name, "I");
+        if (!fid) {
+            LOGE("Field %s not found", name);
+        }
+        return fid;
+    };
+    // interface_number, ep_in, ep_out
+    jfieldID fidInterface = setIntField("interface_number");
+    jfieldID fidEpIn = setIntField("ep_in");
+    jfieldID fidEpOut = setIntField("ep_out");
+    if (fidInterface) env->SetIntField(infoObj, fidInterface, s->interfaceNumber);
+    if (fidEpIn) env->SetIntField(infoObj, fidEpIn, s->epIn);
+    if (fidEpOut) env->SetIntField(infoObj, fidEpOut, s->epOut);
+    // Optionally fill vid/pid with zeros - could be extended to query UsbDevice
+    jfieldID fidVid = setIntField("vid");
+    jfieldID fidPid = setIntField("pid");
+    if (fidVid) env->SetIntField(infoObj, fidVid, 0);
+    if (fidPid) env->SetIntField(infoObj, fidPid, 0);
+    env->DeleteLocalRef(infoClass);
     return 0;
 }
 
@@ -225,7 +250,10 @@ Java_com_fieldtools_ca3bridge_NativeBridge_nativeLastError(
     jlong ptr
 ) {
     auto* s = state(ptr);
-    if (!s) return nullptr;
-    LOGI("nativeLastError stub");
-    return nullptr;
+    if (!s) {
+        return env->NewStringUTF("invalid handle");
+    }
+    LOGI("nativeLastError");
+    // No persistent error state yet; return empty string to indicate no error
+    return env->NewStringUTF("");
 }
